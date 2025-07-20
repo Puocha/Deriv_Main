@@ -20,6 +20,7 @@ header {
   font-weight: bold;
   color: #e11d48;
   letter-spacing: 1px;
+  flex: 1 1 auto;
 }
 .balance-container {
   font-size: 1.1rem;
@@ -87,7 +88,12 @@ main {
   border-radius: 20px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   color: #222;
-  margin-left: 1rem;
+  margin-left: auto;
+  min-width: 220px;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 #balance-list {
   list-style: none;
@@ -100,6 +106,7 @@ main {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  justify-content: flex-end;
 }
 #balance-list li .loginid {
   font-weight: bold;
@@ -117,6 +124,11 @@ main {
 #balance-list li .currency {
   margin-left: 0.2em;
   color: #333;
+}
+#no-accounts {
+  color: #888;
+  font-size: 0.95em;
+  margin-top: 0.5em;
 }
 @media (max-width: 600px) {
   header {
@@ -136,5 +148,11 @@ main {
     margin-top: 0.5rem;
     width: 100%;
     box-sizing: border-box;
+    align-items: flex-start;
+    text-align: left;
+    min-width: unset;
+  }
+  #balance-list li {
+    justify-content: flex-start;
   }
 } 

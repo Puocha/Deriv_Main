@@ -1,6 +1,7 @@
 const APP_ID = 71979;
 const balanceListContainer = document.getElementById('balance-list-container');
 const balanceList = document.getElementById('balance-list');
+const noAccounts = document.getElementById('no-accounts');
 
 function getToken() {
   return localStorage.getItem('deriv_token');
@@ -27,6 +28,13 @@ let loginidList = [];
 
 function renderBalances() {
   balanceList.innerHTML = '';
+  if (!loginidList.length) {
+    noAccounts.classList.remove('hidden');
+    balanceListContainer.classList.remove('hidden');
+    return;
+  } else {
+    noAccounts.classList.add('hidden');
+  }
   loginidList.forEach(acc => {
     const li = document.createElement('li');
     li.innerHTML = `<span class="loginid">${acc.loginid}</span> <span class="type">(${acc.is_virtual ? 'Demo' : 'Real'})</span> <span class="amount">${accountBalances[acc.loginid]?.balance ?? '--'}</span> <span class="currency">${accountBalances[acc.loginid]?.currency ?? ''}</span>`;
@@ -50,12 +58,12 @@ function connectWebSocket(token) {
     if (data.msg_type === 'authorize') {
       if (data.authorize && data.authorize.loginid_list) {
         loginidList = data.authorize.loginid_list;
+        if (!loginidList.length) renderBalances();
         // Subscribe to each account's balance
         loginidList.forEach(acc => {
           ws.send(JSON.stringify({ authorize: token, loginid: acc.loginid }));
         });
       } else if (data.authorize && data.authorize.loginid) {
-        // After each authorize, request balance
         ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
       }
     } else if (data.msg_type === 'balance') {
@@ -66,6 +74,7 @@ function connectWebSocket(token) {
   };
   ws.onerror = () => {
     balanceList.innerHTML = '<li>Error loading balances</li>';
+    balanceListContainer.classList.remove('hidden');
   };
 }
 
