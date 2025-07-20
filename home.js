@@ -106,6 +106,7 @@ let tickCount = 1000;
 const marketData = {};
 let wsMarket = null;
 let marketToken = null;
+let isAuthorized = false;
 
 function initMarketData() {
   markets.forEach(m => {
@@ -184,15 +185,29 @@ function subscribeLiveTick(symbol) {
 function connectMarketWebSocket() {
   if (wsMarket) wsMarket.close();
   wsMarket = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=71979');
+  isAuthorized = false;
   wsMarket.onopen = () => {
-    // Authorize once, then request historical for all
     marketToken = getToken();
+    console.log('[WS] Opened. Sending authorize...');
     wsMarket.send(JSON.stringify({ authorize: marketToken }));
-    markets.forEach(m => subscribeToMarket(m.symbol));
   };
   wsMarket.onmessage = (msg) => {
     const data = JSON.parse(msg.data);
-    if (data.msg_type === 'history' && data.ticks) {
+    console.log('[WS] Message:', data);
+    if (data.msg_type === 'authorize') {
+      if (data.error) {
+        console.error('[WS] Authorization error:', data.error);
+        markets.forEach(m => {
+          marketData[m.symbol].loading = false;
+          marketData[m.symbol].error = 'Authorization error: ' + (data.error.message || 'Unknown');
+        });
+        renderMarketTable();
+        return;
+      }
+      isAuthorized = true;
+      // Now request historical for all
+      markets.forEach(m => subscribeToMarket(m.symbol));
+    } else if (data.msg_type === 'history' && data.ticks) {
       const symbol = data.echo_req.ticks_history;
       marketData[symbol].history = data.ticks.map(price => {
         const priceStr = String(price);
@@ -226,15 +241,24 @@ function connectMarketWebSocket() {
       calculateDigits(symbol);
       renderMarketTable();
     } else if (data.msg_type === 'error') {
+      console.error('[WS] Error:', data);
       if (data.echo_req && (data.echo_req.ticks_history || data.echo_req.ticks)) {
         const symbol = data.echo_req.ticks_history || data.echo_req.ticks;
         marketData[symbol].loading = false;
         marketData[symbol].error = data.error.message || 'Error';
         renderMarketTable();
+      } else {
+        // General error
+        markets.forEach(m => {
+          marketData[m.symbol].loading = false;
+          marketData[m.symbol].error = data.error.message || 'Error';
+        });
+        renderMarketTable();
       }
     }
   };
-  wsMarket.onerror = () => {
+  wsMarket.onerror = (e) => {
+    console.error('[WS] Connection error:', e);
     markets.forEach(m => {
       marketData[m.symbol].loading = false;
       marketData[m.symbol].error = 'WebSocket error';
