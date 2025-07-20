@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;700&display=swap');
+
+body {
+    font-family: 'Josefin Sans', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #FFECDB;
+}
+
+.container {
+    max-width: 1000px;
+    margin: auto;
+    background-color: #AFDDFF;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.controls {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.controls button {
+    padding: 10px 15px;
+    margin: 0 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    color: #18230F;
+}
+
+#connect-button {
+    background-color: #60B5FF;
+}
+
+#connect-button.disconnect {
+    background-color: #FF9149;
+    color: white;
+}
+
+#start-button {
+    background-color: #60B5FF;
+}
+
+#start-button.stop {
+    background-color: #FF9149;
+    color: white;
+}
+
+.log-window,
+.market-data-table {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #60B5FF;
+    border-radius: 4px;
+    background-color: #FFECDB;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.log-window h2,
+.market-data-table h2 {
+    margin-top: 0;
+    color: #60B5FF;
+}
+
+#log {
+    height: 150px;
+    overflow-y: scroll;
+    background-color: #AFDDFF;
+    color: #18230F;
+    padding: 10px;
+    border-radius: 4px;
+    font-family: monospace;
+    white-space: pre-wrap;
+}
+
+.market-data-table table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.market-data-table th,
+.market-data-table td {
+    border: 1px solid #60B5FF;
+    padding: 8px;
+    text-align: left;
+    color: #18230F;
+}
+
+.market-data-table th {
+    background-color: #60B5FF;
+    color: white;
+}
+
+.market-data-table tr:nth-child(even) {
+    background-color: #AFDDFF;
+}
+
+.market-data-table tr:nth-child(odd) {
+    background-color: #FFECDB;
+}
+
+.market-data-table tr:nth-child(even) td {
+    color: #18230F;
+}
+
+.market-data-table tr:nth-child(odd) td {
+     color: #18230F;
+}
+
+/* Styles for highlighting most and least appearing digits */
+.market-data-table td.most-appearing {
+    background-color: #60B5FF;
+    color: white;
+    font-weight: bold;
+}
+
+.market-data-table td.least-appearing {
+    background-color: #FF9149;
+    color: white;
+    font-weight: bold;
+    border: 1px dashed #60B5FF;
+} 
