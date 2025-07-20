@@ -108,6 +108,27 @@ let wsMarket = null;
 let marketToken = null;
 let isAuthorized = false;
 
+// Add balance display
+const balanceContainer = document.getElementById('balance-list-container');
+let balanceValue = null;
+let balanceCurrency = null;
+
+function updateBalanceUI(balance, currency) {
+  let balanceDiv = document.getElementById('account-balance');
+  if (!balanceDiv) {
+    balanceDiv = document.createElement('div');
+    balanceDiv.id = 'account-balance';
+    balanceDiv.style.fontWeight = 'bold';
+    balanceDiv.style.marginBottom = '0.5em';
+    balanceContainer.prepend(balanceDiv);
+  }
+  if (balance !== null && currency) {
+    balanceDiv.textContent = `Balance: ${currency} ${parseFloat(balance).toFixed(2)}`;
+  } else {
+    balanceDiv.textContent = 'Balance: --';
+  }
+}
+
 function initMarketData() {
   markets.forEach(m => {
     marketData[m.symbol] = {
@@ -202,14 +223,33 @@ function connectMarketWebSocket() {
           marketData[m.symbol].error = 'Authorization error: ' + (data.error.message || 'Unknown');
         });
         renderMarketTable();
+        updateBalanceUI(null, null);
         return;
       }
       isAuthorized = true;
-      // Now request historical for all
-      markets.forEach(m => subscribeToMarket(m.symbol));
-    } else if (data.msg_type === 'history' && data.ticks) {
+      // Request balance
+      wsMarket.send(JSON.stringify({ balance: 1 }));
+      // Now request historical+live for all
+      markets.forEach(m => {
+        wsMarket.send(JSON.stringify({
+          ticks_history: m.symbol,
+          count: tickCount,
+          end: 'latest',
+          style: 'ticks',
+          subscribe: 1
+        }));
+      });
+    } else if (data.msg_type === 'balance') {
+      if (data.balance) {
+        balanceValue = data.balance.balance;
+        balanceCurrency = data.balance.currency;
+        updateBalanceUI(balanceValue, balanceCurrency);
+      }
+    } else if (data.msg_type === 'history' && data.history && data.history.prices) {
       const symbol = data.echo_req.ticks_history;
-      marketData[symbol].history = data.ticks.map(price => {
+      const prices = data.history.prices;
+      const decimals = prices.length && String(prices[0]).split('.')[1] ? String(prices[0]).split('.')[1].length : 2;
+      marketData[symbol].history = prices.map(price => {
         const priceStr = String(price);
         const lastDigit = priceStr.includes('.') ? priceStr.split('.').pop().slice(-1) : priceStr.slice(-1);
         return { price, lastDigit };
@@ -223,8 +263,6 @@ function connectMarketWebSocket() {
       marketData[symbol].error = null;
       calculateDigits(symbol);
       renderMarketTable();
-      // After historical, subscribe to live ticks
-      subscribeLiveTick(symbol);
     } else if (data.msg_type === 'tick') {
       const symbol = data.tick.symbol;
       const price = data.tick.quote;
@@ -248,13 +286,13 @@ function connectMarketWebSocket() {
         marketData[symbol].error = data.error.message || 'Error';
         renderMarketTable();
       } else {
-        // General error
         markets.forEach(m => {
           marketData[m.symbol].loading = false;
           marketData[m.symbol].error = data.error.message || 'Error';
         });
         renderMarketTable();
       }
+      updateBalanceUI(null, null);
     }
   };
   wsMarket.onerror = (e) => {
@@ -264,6 +302,7 @@ function connectMarketWebSocket() {
       marketData[m.symbol].error = 'WebSocket error';
     });
     renderMarketTable();
+    updateBalanceUI(null, null);
   };
 }
 
