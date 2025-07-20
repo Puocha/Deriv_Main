@@ -86,4 +86,92 @@ function connectWebSocket(token) {
   if (token) {
     connectWebSocket(token);
   }
-})(); 
+})();
+
+// --- Market Data Table Logic ---
+const markets = [
+  { name: 'Volatility 10 Index', symbol: 'R_10' },
+  { name: 'Volatility 25 Index', symbol: 'R_25' },
+  { name: 'Volatility 50 Index', symbol: 'R_50' },
+  { name: 'Volatility 75 Index', symbol: 'R_75' },
+  { name: 'Volatility 100 Index', symbol: 'R_100' },
+  { name: 'Volatility 10 (1s) Index', symbol: 'R_10_1HZ' },
+  { name: 'Volatility 25 (1s) Index', symbol: 'R_25_1HZ' },
+  { name: 'Volatility 50 (1s) Index', symbol: 'R_50_1HZ' },
+  { name: 'Volatility 75 (1s) Index', symbol: 'R_75_1HZ' },
+  { name: 'Volatility 100 (1s) Index', symbol: 'R_100_1HZ' },
+];
+
+let tickCount = 1000;
+const marketData = {};
+markets.forEach(m => {
+  // Dummy data: price, last digit, and 10 digit percentages
+  marketData[m.symbol] = {
+    name: m.name,
+    price: 123.25,
+    lastDigit: 5,
+    digits: [8.2,8.2,8.2,8.2,8.2,8.2,8.2,8.2,8.2,8.2],
+    history: Array(tickCount).fill({ price: 123.25, lastDigit: 5 })
+  };
+});
+
+function renderMarketTable() {
+  const tbody = document.getElementById('market-data-body');
+  tbody.innerHTML = '';
+  markets.forEach(m => {
+    const data = marketData[m.symbol];
+    if (!data) return;
+    // Find most and least frequent digit(s)
+    const max = Math.max(...data.digits);
+    const min = Math.min(...data.digits);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${data.name}</td>
+      <td>${data.price}</td>
+      <td>${data.lastDigit}</td>
+      ${data.digits.map((pct, i) => `<td class="${pct===max?'digit-most':''} ${pct===min?'digit-least':''}">${pct.toFixed(1)}%</td>`).join('')}
+      <td><button class="download-btn" data-symbol="${m.symbol}">Download</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Tick count selector
+const tickCountSelect = document.getElementById('tick-count');
+tickCountSelect.addEventListener('change', e => {
+  tickCount = parseInt(e.target.value, 10);
+  // Update dummy data for now
+  markets.forEach(m => {
+    marketData[m.symbol].history = Array(tickCount).fill({ price: 123.25, lastDigit: 5 });
+  });
+  renderMarketTable();
+});
+
+// Download CSV for each market
+function downloadMarketCSV(symbol) {
+  const data = marketData[symbol];
+  if (!data) return;
+  let csv = 'Price,Last Digit\n';
+  data.history.forEach(row => {
+    csv += `${row.price},${row.lastDigit}\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${data.name.replace(/\s+/g, '_')}_history.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('download-btn')) {
+    const symbol = e.target.getAttribute('data-symbol');
+    downloadMarketCSV(symbol);
+  }
+});
+
+// Initial render
+renderMarketTable(); 

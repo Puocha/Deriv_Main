@@ -130,6 +130,68 @@ main {
   font-size: 0.95em;
   margin-top: 0.5em;
 }
+.market-data-controls {
+  margin: 2rem 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+#tick-count {
+  padding: 0.3rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+.market-data-table-container {
+  overflow-x: auto;
+  margin-bottom: 2rem;
+}
+#market-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border-radius: 12px;
+  overflow: hidden;
+}
+#market-data-table th, #market-data-table td {
+  padding: 0.7rem 0.5rem;
+  text-align: center;
+  border-bottom: 1px solid #f1f1f1;
+}
+#market-data-table th {
+  background: #f1f5f9;
+  font-weight: 700;
+  color: #222;
+}
+#market-data-table tr:last-child td {
+  border-bottom: none;
+}
+.digit-most {
+  background: #22c55e22;
+  color: #15803d;
+  font-weight: bold;
+  border-radius: 6px;
+}
+.digit-least {
+  background: #ef444422;
+  color: #b91c1c;
+  font-weight: bold;
+  border-radius: 6px;
+}
+.download-btn {
+  background: #e11d48;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.download-btn:hover {
+  background: #be123c;
+}
 @media (max-width: 600px) {
   header {
     flex-direction: column;
@@ -154,5 +216,11 @@ main {
   }
   #balance-list li {
     justify-content: flex-start;
+  }
+}
+@media (max-width: 900px) {
+  #market-data-table th, #market-data-table td {
+    padding: 0.5rem 0.2rem;
+    font-size: 0.95rem;
   }
 } 
