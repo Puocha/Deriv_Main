@@ -104,16 +104,30 @@ const markets = [
 
 let tickCount = 1000;
 const marketData = {};
-markets.forEach(m => {
-  // Dummy data: price, last digit, and 10 digit percentages
-  marketData[m.symbol] = {
-    name: m.name,
-    price: 123.25,
-    lastDigit: 5,
-    digits: [8.2,8.2,8.2,8.2,8.2,8.2,8.2,8.2,8.2,8.2],
-    history: Array(tickCount).fill({ price: 123.25, lastDigit: 5 })
-  };
-});
+let wsMarket = null;
+
+function initMarketData() {
+  markets.forEach(m => {
+    marketData[m.symbol] = {
+      name: m.name,
+      price: '--',
+      lastDigit: '--',
+      digits: Array(10).fill(0),
+      history: [],
+    };
+  });
+}
+
+function calculateDigits(symbol) {
+  const data = marketData[symbol];
+  const digitCounts = Array(10).fill(0);
+  data.history.forEach(tick => {
+    const digit = parseInt(String(tick.lastDigit), 10);
+    if (!isNaN(digit)) digitCounts[digit]++;
+  });
+  const total = data.history.length || 1;
+  data.digits = digitCounts.map(count => (count / total) * 100);
+}
 
 function renderMarketTable() {
   const tbody = document.getElementById('market-data-body');
@@ -136,15 +150,64 @@ function renderMarketTable() {
   });
 }
 
+function subscribeToMarket(symbol) {
+  // Request historical data
+  wsMarket.send(JSON.stringify({
+    ticks_history: symbol,
+    adjust_start_time: 1,
+    count: tickCount,
+    end: 'latest',
+    style: 'ticks',
+    subscribe: 1
+  }));
+}
+
+function connectMarketWebSocket() {
+  if (wsMarket) wsMarket.close();
+  wsMarket = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=71979');
+  wsMarket.onopen = () => {
+    markets.forEach(m => subscribeToMarket(m.symbol));
+  };
+  wsMarket.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+    if (data.msg_type === 'history' && data.ticks) {
+      const symbol = data.echo_req.ticks_history;
+      marketData[symbol].history = data.ticks.map((price, i) => {
+        const lastDigit = String(price).split('.')[1]?.slice(-1) || '0';
+        return { price, lastDigit };
+      });
+      // Set price and last digit from latest tick
+      if (marketData[symbol].history.length) {
+        const last = marketData[symbol].history[marketData[symbol].history.length - 1];
+        marketData[symbol].price = last.price;
+        marketData[symbol].lastDigit = last.lastDigit;
+      }
+      calculateDigits(symbol);
+      renderMarketTable();
+    } else if (data.msg_type === 'tick') {
+      const symbol = data.tick.symbol;
+      const price = data.tick.quote;
+      const lastDigit = String(price).split('.')[1]?.slice(-1) || '0';
+      // Rolling window
+      marketData[symbol].history.push({ price, lastDigit });
+      if (marketData[symbol].history.length > tickCount) {
+        marketData[symbol].history.shift();
+      }
+      marketData[symbol].price = price;
+      marketData[symbol].lastDigit = lastDigit;
+      calculateDigits(symbol);
+      renderMarketTable();
+    }
+  };
+}
+
 // Tick count selector
 const tickCountSelect = document.getElementById('tick-count');
 tickCountSelect.addEventListener('change', e => {
   tickCount = parseInt(e.target.value, 10);
-  // Update dummy data for now
-  markets.forEach(m => {
-    marketData[m.symbol].history = Array(tickCount).fill({ price: 123.25, lastDigit: 5 });
-  });
+  initMarketData();
   renderMarketTable();
+  connectMarketWebSocket();
 });
 
 // Download CSV for each market
@@ -173,5 +236,7 @@ document.addEventListener('click', e => {
   }
 });
 
-// Initial render
-renderMarketTable(); 
+// Initial setup
+initMarketData();
+renderMarketTable();
+connectMarketWebSocket(); 

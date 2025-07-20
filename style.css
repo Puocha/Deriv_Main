@@ -148,24 +148,41 @@ main {
 }
 #market-data-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   background: #fff;
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
   border-radius: 12px;
   overflow: hidden;
+  font-size: 1.08rem;
 }
 #market-data-table th, #market-data-table td {
-  padding: 0.7rem 0.5rem;
+  padding: 0.9rem 0.7rem;
   text-align: center;
   border-bottom: 1px solid #f1f1f1;
+  transition: background 0.2s;
 }
 #market-data-table th {
-  background: #f1f5f9;
+  background: linear-gradient(90deg, #f1f5f9 60%, #f9fafb 100%);
   font-weight: 700;
   color: #222;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
-#market-data-table tr:last-child td {
-  border-bottom: none;
+#market-data-table tr:nth-child(even) td {
+  background: #f9fafb;
+}
+#market-data-table tr:hover td {
+  background: #f3f4f6;
+}
+#market-data-table td:first-child, #market-data-table th:first-child {
+  position: sticky;
+  left: 0;
+  background: #f1f5f9;
+  z-index: 1;
+  text-align: left;
+  font-weight: 600;
 }
 .digit-most {
   background: #22c55e22;
