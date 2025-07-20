@@ -9,25 +9,48 @@
 <body>
   <header>
     <div class="logo">Deriv Auto Trading</div>
-    <div id="balance-container" class="balance-container hidden">
-      Balance: <span id="balance">--</span> <span id="currency"></span>
+    <div id="balance-list-container" class="balance-list-container">
+      <div id="account-balance"></div>
     </div>
   </header>
   <main>
-    <section id="login-section">
-      <h1>Welcome to Deriv Auto Trading</h1>
-      <button id="login-btn" class="primary-btn">Login with Deriv</button>
-      <div class="account-toggle">
-        <label>
-          <input type="checkbox" id="account-type-toggle">
-          <span>Use Demo Account</span>
-        </label>
+    <section id="home-section">
+      <div class="market-data-controls">
+        <label for="tick-count">Number of Ticks:</label>
+        <select id="tick-count">
+          <option value="1000" selected>1000</option>
+          <option value="600">600</option>
+          <option value="200">200</option>
+          <option value="100">100</option>
+        </select>
+      </div>
+      <div class="market-data-table-container">
+        <table id="market-data-table">
+          <thead>
+            <tr>
+              <th>Market Name</th>
+              <th>Price</th>
+              <th>Last Digit</th>
+              <th>0%</th>
+              <th>1%</th>
+              <th>2%</th>
+              <th>3%</th>
+              <th>4%</th>
+              <th>5%</th>
+              <th>6%</th>
+              <th>7%</th>
+              <th>8%</th>
+              <th>9%</th>
+              <th>Download</th>
+            </tr>
+          </thead>
+          <tbody id="market-data-body">
+            <!-- Rows will be rendered by JS -->
+          </tbody>
+        </table>
       </div>
     </section>
-    <section id="home-section" class="hidden">
-      <h2>Home Page</h2>
-    </section>
   </main>
-  <script src="main.js"></script>
+  <script src="home.js"></script>
 </body>
 </html> 

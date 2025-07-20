@@ -1,94 +1,7 @@
+// --- Configuration ---
 const APP_ID = 71979;
-const balanceListContainer = document.getElementById('balance-list-container');
-const balanceList = document.getElementById('balance-list');
-const noAccounts = document.getElementById('no-accounts');
+const API_TOKEN = 'SKyFDXvqk55Xtyr'; // <-- Real account token
 
-function getToken() {
-  return localStorage.getItem('deriv_token');
-}
-
-function setToken(token) {
-  localStorage.setItem('deriv_token', token);
-}
-
-function extractTokenFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  if (params.has('token')) {
-    const token = params.get('token');
-    setToken(token);
-    window.history.replaceState({}, document.title, window.location.pathname);
-    return token;
-  }
-  return null;
-}
-
-let ws = null;
-let accountBalances = {};
-let loginidList = [];
-
-function renderBalances() {
-  balanceList.innerHTML = '';
-  if (!loginidList.length) {
-    noAccounts.classList.remove('hidden');
-    balanceListContainer.classList.remove('hidden');
-    return;
-  } else {
-    noAccounts.classList.add('hidden');
-  }
-  loginidList.forEach(acc => {
-    const li = document.createElement('li');
-    li.innerHTML = `<span class="loginid">${acc.loginid}</span> <span class="type">(${acc.is_virtual ? 'Demo' : 'Real'})</span> <span class="amount">${accountBalances[acc.loginid]?.balance ?? '--'}</span> <span class="currency">${accountBalances[acc.loginid]?.currency ?? ''}</span>`;
-    balanceList.appendChild(li);
-  });
-  balanceListContainer.classList.remove('hidden');
-}
-
-function subscribeToBalance(token, loginid) {
-  ws.send(JSON.stringify({ authorize: token, loginid }));
-}
-
-function connectWebSocket(token) {
-  if (ws) ws.close();
-  ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=' + APP_ID);
-  ws.onopen = () => {
-    ws.send(JSON.stringify({ authorize: token }));
-  };
-  ws.onmessage = (msg) => {
-    const data = JSON.parse(msg.data);
-    if (data.msg_type === 'authorize') {
-      if (data.authorize && data.authorize.loginid_list) {
-        loginidList = data.authorize.loginid_list;
-        if (!loginidList.length) renderBalances();
-        // Subscribe to each account's balance
-        loginidList.forEach(acc => {
-          ws.send(JSON.stringify({ authorize: token, loginid: acc.loginid }));
-        });
-      } else if (data.authorize && data.authorize.loginid) {
-        ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
-      }
-    } else if (data.msg_type === 'balance') {
-      const { loginid, balance, currency } = data.balance;
-      accountBalances[loginid] = { balance: balance.toFixed(2), currency };
-      renderBalances();
-    }
-  };
-  ws.onerror = () => {
-    balanceList.innerHTML = '<li>Error loading balances</li>';
-    balanceListContainer.classList.remove('hidden');
-  };
-}
-
-(function init() {
-  let token = getToken();
-  if (!token) {
-    token = extractTokenFromUrl();
-  }
-  if (token) {
-    connectWebSocket(token);
-  }
-})();
-
-// --- Market Data Table Logic ---
 const markets = [
   { name: 'Volatility 10 Index', symbol: 'R_10' },
   { name: 'Volatility 25 Index', symbol: 'R_25' },
@@ -105,10 +18,8 @@ const markets = [
 let tickCount = 1000;
 const marketData = {};
 let wsMarket = null;
-let marketToken = null;
-let isAuthorized = false;
 
-// Add balance display
+// --- Balance Display ---
 const balanceContainer = document.getElementById('balance-list-container');
 let balanceValue = null;
 let balanceCurrency = null;
@@ -181,47 +92,17 @@ function renderMarketTable() {
   });
 }
 
-function subscribeToMarket(symbol) {
-  // Request historical data first, then subscribe to live ticks
-  wsMarket.send(JSON.stringify({
-    authorize: marketToken
-  }));
-  wsMarket.send(JSON.stringify({
-    ticks_history: symbol,
-    adjust_start_time: 1,
-    count: tickCount,
-    end: 'latest',
-    style: 'ticks',
-    subscribe: 0
-  }));
-}
-
-function subscribeLiveTick(symbol) {
-  wsMarket.send(JSON.stringify({
-    ticks: symbol,
-    subscribe: 1
-  }));
-}
-
 function connectMarketWebSocket() {
-  marketToken = getToken();
-  if (!marketToken) {
-    alert('You are not logged in. Please log in with Deriv to continue.');
-    return;
-  }
   if (wsMarket) wsMarket.close();
-  wsMarket = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=71979');
-  isAuthorized = false;
+  wsMarket = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
   wsMarket.onopen = () => {
-    console.log('[WS] Opened. Sending authorize...');
-    wsMarket.send(JSON.stringify({ authorize: marketToken }));
+    // Authorize with API token
+    wsMarket.send(JSON.stringify({ authorize: API_TOKEN }));
   };
   wsMarket.onmessage = (msg) => {
     const data = JSON.parse(msg.data);
-    console.log('[WS] Message:', data);
     if (data.msg_type === 'authorize') {
       if (data.error) {
-        console.error('[WS] Authorization error:', data.error);
         markets.forEach(m => {
           marketData[m.symbol].loading = false;
           marketData[m.symbol].error = 'Authorization error: ' + (data.error.message || 'Unknown');
@@ -230,7 +111,6 @@ function connectMarketWebSocket() {
         updateBalanceUI(null, null);
         return;
       }
-      isAuthorized = true;
       // Request balance
       wsMarket.send(JSON.stringify({ balance: 1 }));
       // Now request historical+live for all
@@ -283,7 +163,6 @@ function connectMarketWebSocket() {
       calculateDigits(symbol);
       renderMarketTable();
     } else if (data.msg_type === 'error') {
-      console.error('[WS] Error:', data);
       if (data.echo_req && (data.echo_req.ticks_history || data.echo_req.ticks)) {
         const symbol = data.echo_req.ticks_history || data.echo_req.ticks;
         marketData[symbol].loading = false;
@@ -300,7 +179,6 @@ function connectMarketWebSocket() {
     }
   };
   wsMarket.onerror = (e) => {
-    console.error('[WS] Connection error:', e);
     markets.forEach(m => {
       marketData[m.symbol].loading = false;
       marketData[m.symbol].error = 'WebSocket error';
@@ -319,33 +197,30 @@ tickCountSelect.addEventListener('change', e => {
   connectMarketWebSocket();
 });
 
-// Download CSV for each market
-function downloadMarketCSV(symbol) {
-  const data = marketData[symbol];
-  if (!data) return;
-  let csv = 'Price,Last Digit\n';
-  data.history.forEach(row => {
-    csv += `${row.price},${row.lastDigit}\n`;
-  });
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${data.name.replace(/\s+/g, '_')}_history.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
 document.addEventListener('click', e => {
   if (e.target.classList.contains('download-btn')) {
     const symbol = e.target.getAttribute('data-symbol');
-    downloadMarketCSV(symbol);
+    const data = marketData[symbol];
+    if (!data) return;
+    let csv = 'Price,Last Digit\n';
+    data.history.forEach(row => {
+      csv += `${row.price},${row.lastDigit}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${data.name.replace(/\s+/g, '_')}_history.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 });
 
 // Initial setup
-initMarketData();
-renderMarketTable();
-connectMarketWebSocket(); 
+document.addEventListener('DOMContentLoaded', () => {
+  initMarketData();
+  renderMarketTable();
+  connectMarketWebSocket();
+}); 
