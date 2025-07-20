@@ -1,6 +1,6 @@
 const APP_ID = 71979;
 const DERIV_LOGIN_URL = 'https://oauth.deriv.com/oauth2/authorize';
-const REDIRECT_URI = window.location.origin + window.location.pathname;
+const REDIRECT_URI = window.location.origin + window.location.pathname.replace(/index\.html$/, 'home.html');
 
 const loginBtn = document.getElementById('login-btn');
 const logoutBtn = document.getElementById('logout-btn');
