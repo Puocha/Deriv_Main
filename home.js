@@ -204,11 +204,15 @@ function subscribeLiveTick(symbol) {
 }
 
 function connectMarketWebSocket() {
+  marketToken = getToken();
+  if (!marketToken) {
+    alert('You are not logged in. Please log in with Deriv to continue.');
+    return;
+  }
   if (wsMarket) wsMarket.close();
   wsMarket = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=71979');
   isAuthorized = false;
   wsMarket.onopen = () => {
-    marketToken = getToken();
     console.log('[WS] Opened. Sending authorize...');
     wsMarket.send(JSON.stringify({ authorize: marketToken }));
   };
