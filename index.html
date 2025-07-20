@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deriv Auto Trading</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="logo">Deriv Auto Trading</div>
+    <div id="balance-container" class="balance-container hidden">
+      Balance: <span id="balance">--</span> <span id="currency"></span>
+    </div>
+  </header>
+  <main>
+    <section id="login-section">
+      <h1>Welcome to Deriv Auto Trading</h1>
+      <button id="login-btn" class="primary-btn">Login with Deriv</button>
+      <div class="account-toggle">
+        <label>
+          <input type="checkbox" id="account-type-toggle">
+          <span>Use Demo Account</span>
+        </label>
+      </div>
+    </section>
+    <section id="home-section" class="hidden">
+      <h2>Home</h2>
+      <p>You are logged in!</p>
+      <button id="logout-btn" class="secondary-btn">Logout</button>
+    </section>
+  </main>
+  <script src="main.js"></script>
+</body>
+</html> 

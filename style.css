@@ -1,0 +1,96 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #e11d48;
+  letter-spacing: 1px;
+}
+.balance-container {
+  font-size: 1.1rem;
+  background: #f1f5f9;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  color: #222;
+}
+.hidden {
+  display: none !important;
+}
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+}
+#login-section, #home-section {
+  background: #fff;
+  padding: 2.5rem 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  min-width: 320px;
+  max-width: 90vw;
+  margin-top: 2rem;
+  text-align: center;
+}
+.primary-btn, .secondary-btn {
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 24px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1.5rem;
+  transition: background 0.2s, color 0.2s;
+}
+.primary-btn {
+  background: #e11d48;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(225,29,72,0.08);
+}
+.primary-btn:hover {
+  background: #be123c;
+}
+.secondary-btn {
+  background: #f1f5f9;
+  color: #e11d48;
+}
+.secondary-btn:hover {
+  background: #e11d48;
+  color: #fff;
+}
+.account-toggle {
+  margin-top: 1.5rem;
+  font-size: 1rem;
+  color: #555;
+}
+@media (max-width: 600px) {
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+  }
+  .logo {
+    margin-bottom: 0.5rem;
+  }
+  #login-section, #home-section {
+    padding: 1.5rem 0.5rem;
+    min-width: unset;
+  }
+} 
