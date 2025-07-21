@@ -1,0 +1,12 @@
+{
+  "name": "deriv-trader-backend",
+  "version": "1.0.0",
+  "description": "Backend for Deriv trading app using WebSocket API.",
+  "main": "backend/index.js",
+  "scripts": {
+    "start": "node backend/index.js"
+  },
+  "dependencies": {
+    "ws": "^8.13.0"
+  }
+} 
