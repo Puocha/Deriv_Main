@@ -47,19 +47,92 @@ header {
 }
 
 main {
-    max-width: 700px;
-    margin: 2rem auto;
+    max-width: 900px;
+    margin: 1.5rem auto 0 auto;
     background: #23293a;
-    border-radius: 1.5rem;
-    padding: 2rem;
+    border-radius: 1.2rem;
+    padding: 1.2rem 1rem 2rem 1rem;
     box-shadow: 0 4px 24px rgba(0,0,0,0.15);
-    min-height: 300px;
+    min-height: 200px;
 }
 
+.market-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #23293a;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    font-size: 0.98rem;
+    margin: 0 auto;
+    table-layout: fixed;
+}
+.market-table th, .market-table td {
+    padding: 0.45rem 0.3rem;
+    text-align: center;
+    border-bottom: 1px solid #23293a;
+    transition: background 0.2s;
+}
+.market-table th {
+    background: #23293a;
+    color: #7ed957;
+    font-weight: 700;
+    font-size: 1.05rem;
+    border-bottom: 2px solid #31374a;
+}
+.market-table tr:last-child td {
+    border-bottom: none;
+}
+.market-table td {
+    background: #23293a;
+    color: #f3f6fa;
+    font-weight: 500;
+}
+.market-table td.market-name {
+    text-align: left;
+    font-weight: 600;
+    color: #7ed957;
+    background: #23293a;
+}
+.market-table td.price {
+    color: #4fc3f7;
+    font-weight: 600;
+}
+.market-table td.last-digit {
+    color: #ffd600;
+    font-weight: 700;
+}
+
+/* Highlight highest and lowest percentages */
+.market-table td.percent-highest {
+    background: #1e3a1e;
+    color: #7ed957;
+    font-weight: 700;
+    border-radius: 0.4rem;
+}
+.market-table td.percent-lowest {
+    background: #3a1e1e;
+    color: #ff5252;
+    font-weight: 700;
+    border-radius: 0.4rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    main {
+        max-width: 99vw;
+        padding: 0.5rem 0.2rem 1rem 0.2rem;
+    }
+    .market-table th, .market-table td {
+        padding: 0.3rem 0.1rem;
+        font-size: 0.93rem;
+    }
+}
 @media (max-width: 600px) {
     main {
-        padding: 1rem;
-        margin: 1rem;
+        padding: 0.2rem;
+        margin: 0.5rem;
     }
     nav ul {
         flex-direction: column;
@@ -67,5 +140,168 @@ main {
     }
     nav li {
         margin: 0.5rem 0;
+    }
+    .market-table th, .market-table td {
+        font-size: 0.85rem;
+        padding: 0.18rem 0.05rem;
+    }
+} 
+
+.strategy-card {
+    background: #23293a;
+    border-radius: 1.2rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    padding: 1.5rem 1.2rem 1.2rem 1.2rem;
+    margin: 0 auto 2rem auto;
+    max-width: 600px;
+    min-width: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+.strategy-card h2 {
+    color: #7ed957;
+    margin-bottom: 1.2rem;
+    text-align: center;
+    font-size: 1.3rem;
+}
+.strategy-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+.strategy-fields label {
+    color: #f3f6fa;
+    font-size: 1rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.strategy-fields select,
+.strategy-fields input[type="number"] {
+    background: #181c24;
+    color: #7ed957;
+    border: 1px solid #31374a;
+    border-radius: 0.4rem;
+    padding: 0.3rem 0.7rem;
+    font-size: 1rem;
+    outline: none;
+    transition: border 0.2s;
+}
+.strategy-fields select:focus,
+.strategy-fields input[type="number"]:focus {
+    border: 1.5px solid #7ed957;
+}
+#test-market-price {
+    color: #4fc3f7;
+    font-weight: 600;
+    min-width: 60px;
+    display: inline-block;
+}
+#test-toggle-btn.start {
+    background: #7ed957;
+    color: #181c24;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1.2rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+#test-toggle-btn.stop {
+    background: #ff5252;
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1.2rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+#test-toggle-btn.start:hover {
+    background: #5bbf3a;
+}
+#test-toggle-btn.stop:hover {
+    background: #e53935;
+}
+.consecutive-counter {
+    margin: 0.7rem 0 1rem 0;
+    font-size: 1.08rem;
+    color: #ffd600;
+    text-align: center;
+    font-weight: 600;
+}
+.trade-table-container {
+    margin-bottom: 1rem;
+    overflow-x: auto;
+}
+.trade-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #23293a;
+    border-radius: 0.7rem;
+    overflow: hidden;
+    font-size: 0.97rem;
+    margin: 0 auto;
+    table-layout: fixed;
+}
+.trade-table th, .trade-table td {
+    padding: 0.38rem 0.2rem;
+    text-align: center;
+    border-bottom: 1px solid #31374a;
+}
+.trade-table th {
+    background: #23293a;
+    color: #7ed957;
+    font-weight: 700;
+    font-size: 1.01rem;
+    border-bottom: 2px solid #31374a;
+}
+.trade-table tr:last-child td {
+    border-bottom: none;
+}
+.trade-table td {
+    color: #f3f6fa;
+    font-weight: 500;
+}
+.trade-table td:last-child {
+    font-weight: 700;
+}
+.log-window {
+    background: #181c24;
+    color: #b0b8c1;
+    border-radius: 0.7rem;
+    min-height: 70px;
+    max-height: 120px;
+    overflow-y: auto;
+    padding: 0.7rem 1rem;
+    font-size: 0.97rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    margin-top: 0.5rem;
+    font-family: 'Fira Mono', 'Consolas', monospace;
+}
+@media (max-width: 700px) {
+    .strategy-card {
+        max-width: 99vw;
+        padding: 0.7rem 0.2rem 0.7rem 0.2rem;
+    }
+    .strategy-fields {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: stretch;
+    }
+    .trade-table th, .trade-table td {
+        font-size: 0.89rem;
+        padding: 0.18rem 0.05rem;
+    }
+    .log-window {
+        font-size: 0.89rem;
+        padding: 0.4rem 0.5rem;
     }
 } 
