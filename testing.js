@@ -3,11 +3,14 @@
 
 let testingState = {
     selectedMarket: null,
-    points: 100,
+    points: 50,
     running: false,
-    consecutiveCount: 0, // current streak
-    streaksCount: 0,     // number of completed streaks
-    lastDigitHistory: [],
+    streakDigits: [],
+    minStreakLength: 2,
+    patternCount: 0,
+    waitingForTrade: false,
+    activeTrade: null,
+    startingPoints: 0,
     tradeLog: [],
     contractCount: 0,
     balance: 0,
@@ -36,9 +39,16 @@ function renderTestingPage() {
             <label>Points:
                 <input type="number" id="test-points" value="${testingState.points}" min="1" style="width:70px;">
             </label>
+            <label>Consecutive Length:
+                <select id="test-consecutive-length">
+                    <option value="2">More than once</option>
+                    <option value="3">More than twice</option>
+                    <option value="4">More than thrice</option>
+                </select>
+            </label>
             <button id="test-toggle-btn" class="start">Start</button>
         </div>
-        <div class="consecutive-counter">Consecutive 0/1: <span id="test-consec">0</span></div>
+        <div class="consecutive-counter">Pattern Count: <span id="test-pattern-count">0</span></div>
         <div class="trade-table-container">
             <table class="trade-table">
                 <thead><tr><th>#</th><th>Type</th><th>Market</th><th>Entry</th><th>Exit</th><th>Win/Loss</th><th>Points</th></tr></thead>
@@ -53,26 +63,30 @@ function renderTestingPage() {
     document.getElementById('test-market').onchange = onTestMarketChange;
     document.getElementById('test-points').onchange = onTestPointsChange;
     document.getElementById('test-toggle-btn').onclick = onTestToggle;
+    document.getElementById('test-consecutive-length').onchange = onTestLengthChange;
     // Set initial market
     if (!testingState.selectedMarket && markets.length) {
         testingState.selectedMarket = markets[0].symbol;
     }
     document.getElementById('test-market').value = testingState.selectedMarket;
+    document.getElementById('test-consecutive-length').value = testingState.minStreakLength;
     updateTestMarketPrice();
     updateTestMarketLastDigit();
     updateTestTradeTable();
     updateTestLogWindow();
-    updateTestConsecutive();
+    updatePatternCountUI();
+    updatePointsUI();
     // Attach tick listener
     attachTestTickListener();
 }
 
 function onTestMarketChange(e) {
     testingState.selectedMarket = e.target.value;
+    testingState.streakDigits = [];
+    testingState.patternCount = 0;
+    testingState.waitingForTrade = false;
     updateTestMarketPrice();
-    testingState.lastDigitHistory = [];
-    testingState.consecutiveCount = 0;
-    updateTestConsecutive();
+    updatePatternCountUI();
     attachTestTickListener();
 }
 
@@ -83,18 +97,30 @@ function onTestPointsChange(e) {
     e.target.value = val;
 }
 
+function onTestLengthChange(e) {
+    testingState.minStreakLength = parseInt(e.target.value, 10);
+}
+
 function onTestToggle() {
     testingState.running = !testingState.running;
     document.getElementById('test-toggle-btn').textContent = testingState.running ? 'Stop' : 'Start';
     document.getElementById('test-toggle-btn').className = testingState.running ? 'stop' : 'start';
-    if (!testingState.running) {
-        testingState.consecutiveCount = 0;
-        updateTestConsecutive();
+
+    if (testingState.running) {
+        testingState.startingPoints = testingState.points;
+        logTest(`Strategy started with ${testingState.startingPoints} points.`);
+    } else {
+        logTest(`Strategy stopped. Final points: ${testingState.points}. (Started with ${testingState.startingPoints})`);
+        testingState.streakDigits = [];
+        testingState.patternCount = 0;
+        testingState.waitingForTrade = false;
+        updatePatternCountUI();
     }
 }
 
 function updateTestMarketPrice() {
     const priceSpan = document.getElementById('test-market-price');
+    if (!priceSpan) return;
     const market = markets.find(m => m.symbol === testingState.selectedMarket);
     const data = marketData[market.symbol];
     priceSpan.textContent = data && data.lastTick !== undefined ? Number(data.lastTick).toFixed(market.decimals) : '-';
@@ -102,24 +128,26 @@ function updateTestMarketPrice() {
 
 function updateTestMarketLastDigit() {
     const lastDigitSpan = document.getElementById('test-market-last-digit');
+    if (!lastDigitSpan) return;
     const market = markets.find(m => m.symbol === testingState.selectedMarket);
     const data = marketData[market.symbol];
-    let lastDigit = '-';
-    if (data && data.lastTick !== undefined) {
-        const decimals = market.decimals;
-        const num = Number(data.lastTick);
-        if (decimals > 0) {
-            const str = num.toFixed(decimals);
-            lastDigit = str[str.length - 1];
-        } else {
-            lastDigit = Math.abs(Math.floor(num) % 10).toString();
-        }
-    }
+    const digits = data ? data.digits : [];
+    const lastDigit = digits.length ? digits[digits.length - 1] : '-';
     lastDigitSpan.textContent = lastDigit;
 }
 
-function updateTestConsecutive() {
-    document.getElementById('test-consec').textContent = testingState.consecutiveCount;
+function updatePointsUI() {
+    const pointsInput = document.getElementById('test-points');
+    if (pointsInput) {
+        pointsInput.value = testingState.points;
+    }
+}
+
+function updatePatternCountUI() {
+    const patternCountSpan = document.getElementById('test-pattern-count');
+    if (patternCountSpan) {
+        patternCountSpan.textContent = testingState.patternCount;
+    }
 }
 
 function updateTestTradeTable() {
@@ -138,60 +166,60 @@ function updateTestLogWindow() {
 }
 
 function attachTestTickListener() {
-    // Remove previous listener if any
     if (testingState.tickListener) {
         window.removeEventListener('tick', testingState.tickListener);
     }
-    // Add new listener
     testingState.tickListener = function(e) {
         const { symbol, digit, price } = e.detail;
+
+        if (typeof digit !== 'number' || digit < 0 || digit > 9) {
+            return;
+        }
+
         if (symbol === testingState.selectedMarket) {
             updateTestMarketPrice();
             updateTestMarketLastDigit();
         }
-        if (!testingState.running) return;
-        if (symbol !== testingState.selectedMarket) return;
-        // Debug: log each digit and current streak
-        console.log('[DEBUG] Tick digit:', digit, 'Current streak:', testingState.consecutiveCount, 'StreaksCount:', testingState.streaksCount);
-        if (digit === 0 || digit === 1) {
-            testingState.consecutiveCount++;
-            console.log('[DEBUG] 0/1 seen, streak incremented to', testingState.consecutiveCount);
-        } else {
-            if (testingState.consecutiveCount > 1) {
-                testingState.streaksCount++;
-                console.log('[DEBUG] Streak broken by', digit, 'Streak length:', testingState.consecutiveCount, 'StreaksCount incremented to', testingState.streaksCount);
-                logTest(`[Pattern] ${testingState.consecutiveCount}x 0/1 detected, next digit will be marked for contract.`);
-                testingState.lastDigitHistory = [digit];
-                testingState.waitingForTrade = true;
-            } else {
-                console.log('[DEBUG] Streak broken by', digit, 'but streak too short:', testingState.consecutiveCount);
-            }
-            testingState.consecutiveCount = 0;
+        
+        if (symbol !== testingState.selectedMarket || !testingState.running) {
+            return;
         }
-        updateTestConsecutive();
+
+        // State 1: Awaiting trade outcome
         if (testingState.waitingForTrade) {
-            testingState.waitingForTrade = false;
-            const entry = price;
-            const exit = price;
-            const win = digit >= 2;
-            const result = win ? 'Win' : 'Loss';
-            const pointsChange = win ? 2 : -10;
-            testingState.points += pointsChange;
-            testingState.contractCount++;
             const market = markets.find(m => m.symbol === symbol);
-            const log = `Trade executed: ${result} (${digit}) on ${market.name}. Points: ${testingState.points}`;
-            testingState.tradeLog.push({
-                type: 'Over 1',
-                market: market.name,
-                entry: entry,
-                exit: exit,
-                result: result,
-                points: testingState.points,
-                time: new Date().toLocaleTimeString(),
-                log: log
-            });
-            updateTestTradeTable();
-            updateTestLogWindow();
+            const { streak, breakDigit } = testingState.activeTrade;
+            const focusDigit = digit;
+            const patternString = `${streak.join('')}${breakDigit}${focusDigit}`;
+
+            if (digit >= 2) { // WIN
+                testingState.points += 2;
+                logTest(`WIN: Pattern ${patternString}. (+2 points) New Balance: ${testingState.points}`);
+            } else { // LOSS
+                testingState.points -= 10;
+                logTest(`LOSS: Pattern ${patternString}. (-10 points) New Balance: ${testingState.points}`);
+            }
+            testingState.waitingForTrade = false;
+            testingState.activeTrade = null;
+            updatePointsUI();
+            return; // Done with this tick
+        }
+
+        // State 2: Looking for a pattern
+        if (digit === 0 || digit === 1) {
+            testingState.streakDigits.push(digit);
+        } else {
+            if (testingState.streakDigits.length >= testingState.minStreakLength) {
+                testingState.patternCount++;
+                testingState.waitingForTrade = true;
+                testingState.activeTrade = {
+                    streak: [...testingState.streakDigits],
+                    breakDigit: digit,
+                };
+                logTest(`Pattern found: ${testingState.streakDigits.join('')} broken by ${digit}. Awaiting next digit for trade.`);
+                updatePatternCountUI();
+            }
+            testingState.streakDigits = [];
         }
     };
     window.addEventListener('tick', testingState.tickListener);

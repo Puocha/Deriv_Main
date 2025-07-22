@@ -1,7 +1,7 @@
 let currentPage = 'home';
 
 const APP_ID = '71979';
-const API_TOKEN = 'SKyFDXvqk55Xtyr';
+const API_TOKEN = 'lvdD58UJ6xldxqm'
 const DERIV_WS_URL = `wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`;
 
 const MARKET_NAMES = [
@@ -31,6 +31,7 @@ function connectWebSocket() {
     clearTimeout(reconnectTimeout);
 
     ws = new WebSocket(DERIV_WS_URL);
+    window.ws = ws;
 
     ws.onopen = () => {
         ws.send(JSON.stringify({ authorize: API_TOKEN }));
@@ -259,7 +260,7 @@ function loadPage(page) {
     } else if (page === 'testing') {
         if (window.renderTestingPage) window.renderTestingPage();
     } else if (page === 'real') {
-        main.innerHTML = `<h2>Real Trading Page</h2><p>Execute real trades on your Deriv account.</p>`;
+        if (window.renderRealTradingPage) window.renderRealTradingPage();
     }
 }
 

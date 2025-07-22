@@ -190,18 +190,24 @@ main {
     gap: 0.3rem;
 }
 .strategy-fields select,
-.strategy-fields input[type="number"] {
-    background: #181c24;
-    color: #7ed957;
+.strategy-fields input[type="number"],
+.strategy-fields button {
+    background: #1c212b;
     border: 1px solid #31374a;
-    border-radius: 0.4rem;
-    padding: 0.3rem 0.7rem;
+    color: #f3f6fa;
+    border-radius: 4px;
+    padding: 0.3rem 0.5rem;
     font-size: 1rem;
-    outline: none;
-    transition: border 0.2s;
 }
+
+#test-consecutive-length {
+    width: 140px;
+    font-size: 0.85rem;
+}
+
 .strategy-fields select:focus,
-.strategy-fields input[type="number"]:focus {
+.strategy-fields input:focus,
+.strategy-fields button:focus {
     border: 1.5px solid #7ed957;
 }
 #test-market-price {
@@ -312,4 +318,21 @@ main {
         font-size: 0.89rem;
         padding: 0.4rem 0.5rem;
     }
+} 
+/* Real Trading Card Styles */
+#real-market-price, #real-pattern-count {
+    font-weight: bold;
+    color: #7ed957;
+}
+#real-log-window {
+    background: #181c24;
+    color: #f3f6fa;
+    border-radius: 0.5rem;
+    padding: 0.7rem 1rem;
+    margin-top: 1.2rem;
+    min-height: 60px;
+    max-height: 180px;
+    overflow-y: auto;
+    font-size: 0.97rem;
+    font-family: 'Consolas', 'Menlo', 'Monaco', monospace;
 } 
