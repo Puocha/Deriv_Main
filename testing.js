@@ -5,7 +5,8 @@ let testingState = {
     selectedMarket: null,
     points: 100,
     running: false,
-    consecutiveCount: 0,
+    consecutiveCount: 0, // current streak
+    streaksCount: 0,     // number of completed streaks
     lastDigitHistory: [],
     tradeLog: [],
     contractCount: 0,
@@ -28,6 +29,9 @@ function renderTestingPage() {
             </label>
             <label>Price:
                 <span id="test-market-price">-</span>
+            </label>
+            <label>Last Digit:
+                <span id="test-market-last-digit">-</span>
             </label>
             <label>Points:
                 <input type="number" id="test-points" value="${testingState.points}" min="1" style="width:70px;">
@@ -55,6 +59,7 @@ function renderTestingPage() {
     }
     document.getElementById('test-market').value = testingState.selectedMarket;
     updateTestMarketPrice();
+    updateTestMarketLastDigit();
     updateTestTradeTable();
     updateTestLogWindow();
     updateTestConsecutive();
@@ -95,8 +100,26 @@ function updateTestMarketPrice() {
     priceSpan.textContent = data && data.lastTick !== undefined ? Number(data.lastTick).toFixed(market.decimals) : '-';
 }
 
+function updateTestMarketLastDigit() {
+    const lastDigitSpan = document.getElementById('test-market-last-digit');
+    const market = markets.find(m => m.symbol === testingState.selectedMarket);
+    const data = marketData[market.symbol];
+    let lastDigit = '-';
+    if (data && data.lastTick !== undefined) {
+        const decimals = market.decimals;
+        const num = Number(data.lastTick);
+        if (decimals > 0) {
+            const str = num.toFixed(decimals);
+            lastDigit = str[str.length - 1];
+        } else {
+            lastDigit = Math.abs(Math.floor(num) % 10).toString();
+        }
+    }
+    lastDigitSpan.textContent = lastDigit;
+}
+
 function updateTestConsecutive() {
-    document.getElementById('test-consec').textContent = testingState.consecutiveCount;
+    document.getElementById('test-consec').textContent = testingState.streaksCount;
 }
 
 function updateTestTradeTable() {
@@ -121,33 +144,35 @@ function attachTestTickListener() {
     }
     // Add new listener
     testingState.tickListener = function(e) {
-        if (!testingState.running) return;
         const { symbol, digit, price } = e.detail;
+        if (symbol === testingState.selectedMarket) {
+            updateTestMarketPrice();
+            updateTestMarketLastDigit();
+        }
+        if (!testingState.running) return;
         if (symbol !== testingState.selectedMarket) return;
-        // Over 1 strategy logic
-        // Track consecutive 0/1
+        // Debug: log each digit and current streak
+        console.log('[DEBUG] Tick digit:', digit, 'Current streak:', testingState.consecutiveCount, 'StreaksCount:', testingState.streaksCount);
         if (digit === 0 || digit === 1) {
             testingState.consecutiveCount++;
-            updateTestConsecutive();
+            console.log('[DEBUG] 0/1 seen, streak incremented to', testingState.consecutiveCount);
         } else {
             if (testingState.consecutiveCount > 1) {
-                // Pattern detected, mark next digit for contract
+                testingState.streaksCount++;
+                console.log('[DEBUG] Streak broken by', digit, 'Streak length:', testingState.consecutiveCount, 'StreaksCount incremented to', testingState.streaksCount);
                 logTest(`[Pattern] ${testingState.consecutiveCount}x 0/1 detected, next digit will be marked for contract.`);
                 testingState.lastDigitHistory = [digit];
-                // Wait for next tick
-                testingState.consecutiveCount = 0;
-                updateTestConsecutive();
                 testingState.waitingForTrade = true;
             } else {
-                testingState.consecutiveCount = 0;
-                updateTestConsecutive();
+                console.log('[DEBUG] Streak broken by', digit, 'but streak too short:', testingState.consecutiveCount);
             }
+            testingState.consecutiveCount = 0;
         }
-        // If waiting for trade, execute trade on this tick
+        updateTestConsecutive();
         if (testingState.waitingForTrade) {
             testingState.waitingForTrade = false;
             const entry = price;
-            const exit = price; // Simulated, as we don't have contract exit
+            const exit = price;
             const win = digit >= 2;
             const result = win ? 'Win' : 'Loss';
             const pointsChange = win ? 2 : -10;

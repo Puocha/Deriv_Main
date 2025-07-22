@@ -1,3 +1,5 @@
+let currentPage = 'home';
+
 const APP_ID = '71979';
 const API_TOKEN = 'SKyFDXvqk55Xtyr';
 const DERIV_WS_URL = `wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`;
@@ -59,7 +61,6 @@ function connectWebSocket() {
 
     ws.onerror = (err) => {
         document.getElementById('balance').textContent = 'Error';
-        console.error('WebSocket error:', err);
     };
 
     ws.onclose = () => {
@@ -128,31 +129,28 @@ function handleHistory(response) {
         digits: getLastDigits(prices.slice(-tickCount), symbol),
         decimals: getDecimalsForSymbol(symbol),
     };
-    // Subscribe to live ticks for this symbol
-    const sub = ws.send(JSON.stringify({ ticks: symbol, subscribe: 1 }));
-    // The subscription id will be set in handleTick
+    ws.send(JSON.stringify({ ticks: symbol, subscribe: 1 }));
     renderMarketTable();
 }
 
 function handleTick(response) {
     const symbol = response.tick.symbol;
     const price = response.tick.quote;
-    // Save subscription id for later unsubscription
     if (response.subscription && response.subscription.id) {
         tickSubscriptions[symbol] = response.subscription.id;
     }
     if (!marketData[symbol]) {
         marketData[symbol] = { prices: [], digits: [], decimals: getDecimalsForSymbol(symbol) };
     }
-    // Maintain a moving window of tickCount
     marketData[symbol].prices.push(price);
     if (marketData[symbol].prices.length > tickCount) {
         marketData[symbol].prices = marketData[symbol].prices.slice(-tickCount);
     }
     marketData[symbol].lastTick = price;
     marketData[symbol].digits = getLastDigits(marketData[symbol].prices, symbol);
-    renderMarketTable();
-    // Broadcast tick for testing page
+    if (currentPage === 'home') {
+        renderMarketTable();
+    }
     if (window.broadcastTick) {
         const digits = marketData[symbol].digits;
         const lastDigit = digits.length ? digits[digits.length - 1] : null;
@@ -205,7 +203,6 @@ function renderMarketTable() {
         const digits = data ? data.digits : [];
         const lastDigit = digits.length ? digits[digits.length - 1] : '-';
         const percentages = digits.length ? calculateDigitPercentages(digits) : Array(10).fill('-');
-        // Find highest and lowest (ignore '-')
         let maxIdx = -1, minIdx = -1, maxVal = -Infinity, minVal = Infinity;
         if (digits.length) {
             percentages.forEach((p, i) => {
@@ -255,6 +252,7 @@ function renderMarketTable() {
 }
 
 function loadPage(page) {
+    currentPage = page;
     const main = document.getElementById('main-content');
     if (page === 'home') {
         renderMarketTable();
@@ -267,6 +265,7 @@ function loadPage(page) {
 
 document.addEventListener('DOMContentLoaded', () => {
     connectWebSocket();
+    const main = document.getElementById('main-content');
     loadPage('home');
     document.getElementById('nav-home').onclick = (e) => { e.preventDefault(); loadPage('home'); };
     document.getElementById('nav-testing').onclick = (e) => { e.preventDefault(); loadPage('testing'); };

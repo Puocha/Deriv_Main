@@ -35,16 +35,24 @@ header {
     text-align: center;
     margin: 2rem 0 1rem 0;
 }
-#balance-container {
-    margin-top: 0.5rem;
-    font-size: 1.2rem;
+#balance-fixed-container {
+    position: fixed;
+    top: 0.7rem;
+    right: 1.5rem;
     background: #23293a;
-    display: inline-block;
-    padding: 0.5rem 1.5rem;
-    border-radius: 1rem;
     color: #7ed957;
+    font-size: 1.15rem;
+    font-weight: 600;
+    padding: 0.5rem 1.2rem;
+    border-radius: 1.2rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    z-index: 1000;
 }
+#balance-fixed-container span {
+    color: #7ed957;
+    font-weight: 700;
+}
+#balance-container { display: none; }
 
 main {
     max-width: 900px;
