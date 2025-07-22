@@ -119,7 +119,7 @@ function updateTestMarketLastDigit() {
 }
 
 function updateTestConsecutive() {
-    document.getElementById('test-consec').textContent = testingState.streaksCount;
+    document.getElementById('test-consec').textContent = testingState.consecutiveCount;
 }
 
 function updateTestTradeTable() {
